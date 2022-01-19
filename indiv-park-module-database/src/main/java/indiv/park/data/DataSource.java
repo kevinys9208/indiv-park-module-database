@@ -34,6 +34,24 @@ public enum DataSource {
 		public String getDiarect() {
 			return "org.hibernate.dialect.Oracle9iDialect";
 		}
+	},
+	
+	SQLITE() {
+
+		@Override
+		public String getUrl(String ip, int port, String sid) {
+			return "jdbc:sqlite:" + sid + ".sqlite";
+		}
+
+		@Override
+		public String getDataSourceClassName() {
+			return "org.sqlite.javax.SQLiteConnectionPoolDataSource";
+		}
+
+		@Override
+		public String getDiarect() {
+			return "org.sqlite.hibernate.dialect.SQLiteDialect";
+		}
 	};
 	
 	public abstract String getUrl(String ip, int port, String sid);

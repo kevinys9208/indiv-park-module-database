@@ -67,17 +67,21 @@ public class DatabaseModule implements ModuleBase {
 				throw new TypeNotFoundException(config.getType());
 			}
 			
-			Configuration configuration = new Configuration()
-														.setProperty("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider")
-														.setProperty("hibernate.dialect", dataSource.getDiarect())
-														.setProperty("hibernate.hikari.poolName", config.getName())
-														.setProperty("hibernate.hikari.minimumIdle", "5")
-														.setProperty("hibernate.hikari.maximumPoolSize", "10")
-														.setProperty("hibernate.hikari.idleTimeout", "30000")
-														.setProperty("hibernate.hikari.dataSourceClassName", dataSource.getDataSourceClassName())
-														.setProperty("hibernate.hikari.dataSource.url", dataSource.getUrl(config.getIp(), config.getPort(), config.getSid()))
-														.setProperty("hibernate.hikari.dataSource.user", config.getUser())
-														.setProperty("hibernate.hikari.dataSource.password", config.getPassword());
+			Configuration configuration = new Configuration();
+			
+			configuration.setProperty("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
+			configuration.setProperty("hibernate.dialect", dataSource.getDiarect());
+			configuration.setProperty("hibernate.hikari.poolName", config.getName());
+			configuration.setProperty("hibernate.hikari.minimumIdle", "5");
+			configuration.setProperty("hibernate.hikari.maximumPoolSize", "10");
+			configuration.setProperty("hibernate.hikari.idleTimeout", "30000");
+			configuration.setProperty("hibernate.hikari.dataSourceClassName", dataSource.getDataSourceClassName());
+			configuration.setProperty("hibernate.hikari.dataSource.url", dataSource.getUrl(config.getIp(), config.getPort(), config.getSid()));
+			
+			if (!dataSource.name().equals("SQLITE")) {
+				configuration.setProperty("hibernate.hikari.dataSource.user", config.getUser());
+				configuration.setProperty("hibernate.hikari.dataSource.password", config.getPassword());
+			}
 			
 			Reflections reflections = new Reflections(mainClass.getPackage().getName());
 			Set<Class<?>> entitySet = reflections.getTypesAnnotatedWith(Entity.class);
@@ -106,6 +110,8 @@ public class DatabaseModule implements ModuleBase {
 			return DataSource.ORACLE;
 		case "TIBERO":
 			return DataSource.TIBERO;
+		case "SQLITE":
+			return DataSource.SQLITE;
 		default:
 			return null;
 		}
