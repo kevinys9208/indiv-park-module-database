@@ -79,7 +79,7 @@ public class DatabaseModule implements ModuleBase {
 			configuration.setProperty("hibernate.hikari.dataSource.url", dataSource.getUrl(config.getIp(), config.getPort(), config.getSid()));
 			
 			if (dataSource.name().equals("SQLITE")) {
-				configuration.setProperty("hibernate.hbm2ddl.auto", "update");
+				configuration.setProperty("hibernate.hbm2ddl.auto", "validate");
 				
 			} else {
 				configuration.setProperty("hibernate.hikari.dataSource.user", config.getUser());
