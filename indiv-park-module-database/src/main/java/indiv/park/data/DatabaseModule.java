@@ -18,6 +18,7 @@ import indiv.park.data.exception.NameNotFoundException;
 import indiv.park.data.exception.SameNameException;
 import indiv.park.data.exception.TypeNotFoundException;
 import indiv.park.starter.annotation.Module;
+import indiv.park.starter.exception.ModuleException;
 import indiv.park.starter.inheritance.ModuleBase;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,13 +37,23 @@ public class DatabaseModule implements ModuleBase {
 	}
 	
 	@Override
-	public void initialize(Class<?> mainClass) {
+	public void initialize(Class<?> mainClass) throws ModuleException {
 		if (configuration == null) {
-			throw new NullPointerException("데이터베이스를 구성하기 위한 설정 정보가 없습니다.");
+			throw new ModuleException("데이터베이스를 구성하기 위한 설정 정보가 없습니다.", null);
 		}
 		
-		addUserDatabaseConfiguration();
-		createSessionFactory(mainClass);
+		try { addUserDatabaseConfiguration(); } 
+		catch (Exception e) {
+			String msg = "데이터베이스 설정 파일 등록에 실패함.";
+			throw new ModuleException(msg, e.getCause());
+		}
+		
+		try { createSessionFactory(mainClass); } 
+		catch (Exception e) {
+			String msg = "세션 팩토리 생성에 실패함.";
+			throw new ModuleException(msg, e.getCause());
+		}
+		
 	}
 
 	@Override
@@ -61,50 +72,45 @@ public class DatabaseModule implements ModuleBase {
 	}
 
 	private void readDatabaseConfiguration(DatabaseConfiguration config, Class<?> mainClass) {
-		try {
-			DataSource dataSource = getDataSource(config.getType());
-			if (dataSource == null) {
-				throw new TypeNotFoundException(config.getType());
-			}
-			
-			Configuration configuration = new Configuration();
-			
-			configuration.setProperty("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
-			configuration.setProperty("hibernate.dialect", dataSource.getDiarect());
-			configuration.setProperty("hibernate.hikari.poolName", config.getName());
-			configuration.setProperty("hibernate.hikari.minimumIdle", "5");
-			configuration.setProperty("hibernate.hikari.maximumPoolSize", "10");
-			configuration.setProperty("hibernate.hikari.idleTimeout", "30000");
-			configuration.setProperty("hibernate.hikari.dataSourceClassName", dataSource.getDataSourceClassName());
-			configuration.setProperty("hibernate.hikari.dataSource.url", dataSource.getUrl(config.getIp(), config.getPort(), config.getSid()));
-			
-			if (dataSource.name().equals("SQLITE")) {
-				configuration.setProperty("hibernate.hbm2ddl.auto", "validate");
-				
-			} else {
-				configuration.setProperty("hibernate.hikari.dataSource.user", config.getUser());
-				configuration.setProperty("hibernate.hikari.dataSource.password", config.getPassword());
-			}
-			
-			Reflections reflections = new Reflections(mainClass.getPackage().getName());
-			Set<Class<?>> entitySet = reflections.getTypesAnnotatedWith(Entity.class);
-			final String found = "확인된 엔티티 : {}";
-			
-			for (Class<?> clazz : entitySet) {
-				logger.info(found, clazz.getSimpleName());
-				configuration.addAnnotatedClass(clazz);
-			}
-			
-			SessionFactory sessionFactory = configuration.buildSessionFactory();
-			
-			if (sessionFactoryMap.containsKey(config.getName())) {
-				throw new SameNameException(config.getName());
-			}
-			sessionFactoryMap.put(config.getName(), sessionFactory);
-			
-		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage());
+		DataSource dataSource = getDataSource(config.getType());
+		if (dataSource == null) {
+			throw new TypeNotFoundException(config.getType());
 		}
+		
+		Configuration configuration = new Configuration();
+		
+		configuration.setProperty("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
+		configuration.setProperty("hibernate.dialect", dataSource.getDiarect());
+		configuration.setProperty("hibernate.hikari.poolName", config.getName());
+		configuration.setProperty("hibernate.hikari.minimumIdle", "5");
+		configuration.setProperty("hibernate.hikari.maximumPoolSize", "10");
+		configuration.setProperty("hibernate.hikari.idleTimeout", "30000");
+		configuration.setProperty("hibernate.hikari.dataSourceClassName", dataSource.getDataSourceClassName());
+		configuration.setProperty("hibernate.hikari.dataSource.url", dataSource.getUrl(config.getIp(), config.getPort(), config.getSid()));
+		
+		if (dataSource.name().equals("SQLITE")) {
+			configuration.setProperty("hibernate.hbm2ddl.auto", "validate");
+			
+		} else {
+			configuration.setProperty("hibernate.hikari.dataSource.user", config.getUser());
+			configuration.setProperty("hibernate.hikari.dataSource.password", config.getPassword());
+		}
+		
+		Reflections reflections = new Reflections(mainClass.getPackage().getName());
+		Set<Class<?>> entitySet = reflections.getTypesAnnotatedWith(Entity.class);
+		final String found = "확인된 엔티티 : {}";
+		
+		for (Class<?> clazz : entitySet) {
+			logger.info(found, clazz.getSimpleName());
+			configuration.addAnnotatedClass(clazz);
+		}
+		
+		SessionFactory sessionFactory = configuration.buildSessionFactory();
+		
+		if (sessionFactoryMap.containsKey(config.getName())) {
+			throw new SameNameException(config.getName());
+		}
+		sessionFactoryMap.put(config.getName(), sessionFactory);
 	}
 	
 	private DataSource getDataSource(String type) {
