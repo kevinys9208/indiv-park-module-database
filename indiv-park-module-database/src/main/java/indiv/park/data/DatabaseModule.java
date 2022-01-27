@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Module(name = "database")
 @Slf4j
-public class DatabaseModule implements ModuleBase {
+public final class DatabaseModule implements ModuleBase {
 	
 	public static final DatabaseModule INSTANCE = new DatabaseModule();
 
@@ -33,27 +33,16 @@ public class DatabaseModule implements ModuleBase {
 	
 	private Object configuration;
 	
-	private DatabaseModule() {
-	}
+	private DatabaseModule() {}
 	
 	@Override
-	public void initialize(Class<?> mainClass) throws ModuleException {
+	public void initialize(Class<?> mainClass) {
 		if (configuration == null) {
 			throw new ModuleException("데이터베이스를 구성하기 위한 설정 정보가 없습니다.", null);
 		}
 		
-		try { addUserDatabaseConfiguration(); } 
-		catch (Exception e) {
-			String msg = "데이터베이스 설정 파일 등록에 실패함.";
-			throw new ModuleException(msg, e.getCause());
-		}
-		
-		try { createSessionFactory(mainClass); } 
-		catch (Exception e) {
-			String msg = "세션 팩토리 생성에 실패함.";
-			throw new ModuleException(msg, e.getCause());
-		}
-		
+		addUserDatabaseConfiguration();
+		createSessionFactory(mainClass);
 	}
 
 	@Override
@@ -72,7 +61,7 @@ public class DatabaseModule implements ModuleBase {
 	}
 
 	private void readDatabaseConfiguration(DatabaseConfiguration config, Class<?> mainClass) {
-		DataSource dataSource = getDataSource(config.getType());
+		DataSource dataSource = DataSource.valueOf(config.getType().toUpperCase());
 		if (dataSource == null) {
 			throw new TypeNotFoundException(config.getType());
 		}
@@ -111,19 +100,6 @@ public class DatabaseModule implements ModuleBase {
 			throw new SameNameException(config.getName());
 		}
 		sessionFactoryMap.put(config.getName(), sessionFactory);
-	}
-	
-	private DataSource getDataSource(String type) {
-		switch (type.toUpperCase()) {
-		case "ORACLE":
-			return DataSource.ORACLE;
-		case "TIBERO":
-			return DataSource.TIBERO;
-		case "SQLITE":
-			return DataSource.SQLITE;
-		default:
-			return null;
-		}
 	}
 	
 	public SessionFactory getSessionFactory(String name) {
