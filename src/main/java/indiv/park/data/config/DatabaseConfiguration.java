@@ -1,7 +1,11 @@
 package indiv.park.data.config;
 
+import lombok.Getter;
+
 import java.util.Map;
 
+
+@Getter
 public class DatabaseConfiguration {
 
 	private String name, type, ip, sid, user, password;
@@ -15,33 +19,5 @@ public class DatabaseConfiguration {
 		this.user = (String) config.get("user");
 		this.password = (String) config.get("password");
 		this.port = (int) config.get("port");
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String getType() {
-		return type;
-	}
-
-	public String getIp() {
-		return ip;
-	}
-
-	public String getSid() {
-		return sid;
-	}
-
-	public String getUser() {
-		return user;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public int getPort() {
-		return port;
 	}
 }
