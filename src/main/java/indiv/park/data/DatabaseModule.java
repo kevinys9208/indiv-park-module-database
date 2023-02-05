@@ -1,26 +1,19 @@
 package indiv.park.data;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.persistence.Entity;
-
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.reflections.Reflections;
-
 import indiv.park.data.config.DatabaseConfiguration;
 import indiv.park.data.exception.NameNotFoundException;
 import indiv.park.data.exception.SameNameException;
-import indiv.park.data.exception.TypeNotFoundException;
 import indiv.park.starter.annotation.Module;
 import indiv.park.starter.exception.ModuleException;
 import indiv.park.starter.inheritance.ModuleBase;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+import org.reflections.Reflections;
+
+import javax.persistence.Entity;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Module(name = "database")
 @Slf4j
@@ -93,25 +86,23 @@ public final class DatabaseModule implements ModuleBase {
 		
 		SessionFactory sessionFactory = configuration.buildSessionFactory();
 		
-		if (sessionFactoryMap.containsKey(config.getName())) {
+		if (sessionFactoryMap.containsKey(config.getName()))
 			throw new SameNameException(config.getName());
-		}
+
 		sessionFactoryMap.put(config.getName(), sessionFactory);
 	}
 	
 	public SessionFactory getSessionFactory(String name) {
 		SessionFactory sessionFactory = sessionFactoryMap.get(name);
-		if (sessionFactory == null) {
+		if (sessionFactory == null)
 			throw new NameNotFoundException(name);
-		}
 		return sessionFactory;
 	}
 	
 	public void closeGracefully() {
 		sessionFactoryMap.forEach((name, sessionFactory) -> {
-			if (Objects.nonNull(sessionFactory)) {
+			if (Objects.nonNull(sessionFactory))
 				sessionFactory.close();
-			}
 		});
 		
 		logger.info("데이터베이스를 안전하게 종료하였습니다.");

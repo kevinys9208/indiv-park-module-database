@@ -8,8 +8,8 @@ import java.util.Map;
 @Getter
 public class DatabaseConfiguration {
 
-	private String name, type, ip, sid, user, password;
-	private int port;
+	private final String name, type, ip, sid, user, password;
+	private final int port;
 
 	public DatabaseConfiguration(Map<String, Object> config) {
 		this.name = (String) config.get("name");
